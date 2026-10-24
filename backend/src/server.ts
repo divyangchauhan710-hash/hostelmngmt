@@ -77,6 +77,16 @@ app.use('/api/admin', adminRoutes);
 // Centralized error handler
 app.use(errorHandler);
 
+// ── Production: serve compiled React frontend ──────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+  app.use(express.static(frontendDist));
+  // Catch-all: return index.html so React Router handles client-side routes
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
+
 // Start server if run directly
 if (process.env.NODE_ENV !== 'test') {
   connectDB().then(() => {
