@@ -89,9 +89,26 @@ if (process.env.NODE_ENV === 'production') {
 
 // Start server if run directly
 if (process.env.NODE_ENV !== 'test') {
-  connectDB().then(() => {
+  connectDB().then(async (conn) => {
+    // ── Auto-seed on first run (no shell needed on free hosting) ────────────
+    if (conn) {
+      try {
+        const { User } = await import('./models/User.js');
+        const userCount = await User.countDocuments();
+        if (userCount === 0) {
+          console.log('[HostelHub] Empty database detected — running auto-seed...');
+          const { seedDatabase } = await import('./seeds/seed.js');
+          await seedDatabase();
+          console.log('[HostelHub] Auto-seed complete. Demo accounts are ready.');
+        }
+      } catch (seedErr) {
+        console.error('[HostelHub] Auto-seed failed (non-fatal):', seedErr);
+      }
+    }
+
     app.listen(PORT, () => {
       console.log(`[HostelHub] Backend server listening on port ${PORT}`);
     });
   });
 }
+
